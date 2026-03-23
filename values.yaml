@@ -1,7 +1,0 @@
-image:
-  repository: nginx
-  tag: "1.21"
-
-service:
-  type: ClusterIP
-  port: 80

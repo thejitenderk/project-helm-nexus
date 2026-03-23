@@ -1,0 +1,39 @@
+# ─── App Image ──────────────────────────────────────────────
+replicaCount: 1
+
+image:
+  repository: nginx          # ← apna Docker image daalo (e.g. myuser/my-app)
+  tag: "latest"              # ← image tag (e.g. "1.0.0" ya "latest")
+  pullPolicy: IfNotPresent   # Minikube ke liye IfNotPresent best hai
+
+# ─── Service ────────────────────────────────────────────────
+service:
+  type: NodePort             # Minikube pe NodePort se directly access hoga
+  port: 80                   # Service ka port
+  targetPort: 80             # Container ka port (app jis port pe run ho)
+  nodePort: 30080            # Browser mein: http://$(minikube ip):30080
+
+# ─── Resources (Minikube ke liye light rakha) ────────────────
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+# ─── App Environment Variables ──────────────────────────────
+env:
+  APP_ENV: "development"
+  APP_PORT: "80"
+
+# ─── Health Checks ──────────────────────────────────────────
+livenessProbe:
+  path: /
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
+readinessProbe:
+  path: /
+  initialDelaySeconds: 5
+  periodSeconds: 10
