@@ -1,39 +1,87 @@
-# ─── App Image ──────────────────────────────────────────────
-replicaCount: 1
+# ─────────────────────────────────────────────────────────────
+# Docker Voting App - Helm Values
+# ─────────────────────────────────────────────────────────────
 
-image:
-  repository: nginx          # ← apna Docker image daalo (e.g. myuser/my-app)
-  tag: "latest"              # ← image tag (e.g. "1.0.0" ya "latest")
-  pullPolicy: IfNotPresent   # Minikube ke liye IfNotPresent best hai
+# ─── UI Applications ─────────────────────────────────────────
+uis:
+  - name: vote-ui
+    image:
+      repository: docker.io/dockersamples/examplevotingapp_vote
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    replicaCount: 1
+    containerPort: 80
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env:
+      OPTION_A: "Cats"
+      OPTION_B: "Dogs"
+    envFromConfigMap: ""
+    envFromSecret: ""
 
-# ─── Service ────────────────────────────────────────────────
-service:
-  type: NodePort             # Minikube pe NodePort se directly access hoga
-  port: 80                   # Service ka port
-  targetPort: 80             # Container ka port (app jis port pe run ho)
-  nodePort: 30080            # Browser mein: http://$(minikube ip):30080
+  - name: result-ui
+    image:
+      repository: docker.io/dockersamples/examplevotingapp_result
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    replicaCount: 1
+    containerPort: 80
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    env: {}
+    envFromConfigMap: ""
+    envFromSecret: ""
 
-# ─── Resources (Minikube ke liye light rakha) ────────────────
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 250m
-    memory: 256Mi
+# ─── Microservices ───────────────────────────────────────────
+microservices:
+  - name: vote-api
+    image:
+      repository: docker.io/dockersamples/examplevotingapp_vote
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    replicaCount: 1
+    containerPort: 80
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
+    env:
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+    envFromConfigMap: ""
+    envFromSecret: ""
 
-# ─── App Environment Variables ──────────────────────────────
-env:
-  APP_ENV: "development"
-  APP_PORT: "80"
-
-# ─── Health Checks ──────────────────────────────────────────
-livenessProbe:
-  path: /
-  initialDelaySeconds: 10
-  periodSeconds: 15
-
-readinessProbe:
-  path: /
-  initialDelaySeconds: 5
-  periodSeconds: 10
+  - name: worker
+    image:
+      repository: docker.io/dockersamples/examplevotingapp_worker
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    replicaCount: 1
+    containerPort: 8080
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 256Mi
+    env:
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      DATABASE_HOST: "db"
+      DATABASE_PORT: "5432"
+    envFromConfigMap: ""
+    envFromSecret: ""

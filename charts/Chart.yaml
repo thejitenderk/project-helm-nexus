@@ -1,18 +1,6 @@
 apiVersion: v2
-name: my-app
-description: Simple Web App - Deployment + Service
+name: voting-app-chart
+description: Docker Sample Voting App - Unified Helm Chart
 type: application
-
-# Chart ka version - jab bhi kuch change karo, yeh badhao
 version: 0.1.0
-
-# Tumhari actual app ka image version
 appVersion: "1.0.0"
-
-keywords:
-  - my-app
-  - webapp
-
-maintainers:
-  - name: Jitender-Kumar
-    email: thejitenderk@gmail.com

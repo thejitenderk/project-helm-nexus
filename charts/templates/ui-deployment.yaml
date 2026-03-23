@@ -1,4 +1,4 @@
-{{- range .Values.microservices }}
+{{- range .Values.uis }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -6,7 +6,7 @@ metadata:
   name: {{ .name }}
   labels:
     app: {{ .name }}
-    tier: backend
+    tier: frontend
 spec:
   replicas: {{ .replicaCount }}
   selector:
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app: {{ .name }}
-        tier: backend
+        tier: frontend
     spec:
       containers:
         - name: {{ .name }}

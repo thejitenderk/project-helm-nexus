@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────
+# override.yaml — Harness CD mein yeh pass hoga
+# helm install my-app my-nexus/my-app-chart -f override.yaml
+# ─────────────────────────────────────────────────────────────
+
+uis:
+  - name: admin-ui
+    image:
+      repository: my-registry/admin-ui
+      tag: "2.5.1"            # ← Harness yahan naya image tag inject karega
+    replicaCount: 2
+
+microservices:
+  - name: user-service
+    image:
+      repository: my-registry/user-service
+      tag: "3.1.0"            # ← Harness yahan naya image tag inject karega
+    replicaCount: 2
+
+  - name: order-service
+    image:
+      repository: my-registry/order-service
+      tag: "1.8.2"
+    replicaCount: 3
