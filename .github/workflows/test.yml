@@ -1,0 +1,91 @@
+name: Helm Chart CI/CD → Nexus
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/**'        # sirf tab run ho jab charts folder mein kuch change ho
+  workflow_dispatch:        # manual trigger bhi kar sako
+
+env:
+  NEXUS_URL: http://localhost:8081  # ← apna Nexus URL daalo
+  NEXUS_REPO: helm-hosted
+  CHART_DIR: charts                         # ← apna chart folder
+
+jobs:
+  helm-push:
+    name: Package & Push Helm Chart
+    runs-on: self-hosted
+
+    steps:
+      # ─── 1. Code checkout ───────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history chahiye version bump ke liye
+
+      # ─── 2. Helm install ────────────────────────────────────────────
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+
+      # ─── 3. Chart version auto-detect ───────────────────────────────
+      - name: Read chart version
+        id: chart_info
+        run: |
+          CHART_NAME=$(grep '^name:' ${{ env.CHART_DIR }}/Chart.yaml | awk '{print $2}')
+          CHART_VERSION=$(grep '^version:' ${{ env.CHART_DIR }}/Chart.yaml | awk '{print $2}')
+          echo "chart_name=$CHART_NAME" >> $GITHUB_OUTPUT
+          echo "chart_version=$CHART_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Chart: $CHART_NAME — Version: $CHART_VERSION"
+
+      # ─── 4. Helm lint (errors pakdo pehle) ──────────────────────────
+      - name: Lint Helm chart
+        run: |
+          helm lint ${{ env.CHART_DIR }}
+
+      # ─── 5. Helm package ────────────────────────────────────────────
+      - name: Package Helm chart
+        run: |
+          mkdir -p packaged
+          helm package ${{ env.CHART_DIR }} --destination packaged/
+          echo "✅ Packaged: $(ls packaged/)"
+
+      # ─── 6. Push to Nexus ───────────────────────────────────────────
+      - name: Push chart to Nexus
+        env:
+          NEXUS_USER: ${{ secrets.NEXUS_USERNAME }}
+          NEXUS_PASS: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          CHART_FILE=$(ls packaged/*.tgz)
+          FILENAME=$(basename $CHART_FILE)
+
+          echo "🚀 Pushing $FILENAME to Nexus..."
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -u "$NEXUS_USER:$NEXUS_PASS" \
+            --upload-file "$CHART_FILE" \
+            "${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }}/$FILENAME")
+
+          echo "HTTP Status: $HTTP_STATUS"
+
+          if [[ "$HTTP_STATUS" == "200" || "$HTTP_STATUS" == "201" ]]; then
+            echo "✅ Chart pushed successfully!"
+          else
+            echo "❌ Push failed with HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+      # ─── 7. Summary ─────────────────────────────────────────────────
+      - name: Job Summary
+        run: |
+          echo "## 🎉 Helm Chart Pushed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Chart | \`${{ steps.chart_info.outputs.chart_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ steps.chart_info.outputs.chart_version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nexus Repo | \`${{ env.NEXUS_REPO }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| URL | ${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }}/ |" >> $GITHUB_STEP_SUMMARY
