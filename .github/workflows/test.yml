@@ -98,7 +98,7 @@ jobs:
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -u "$NEXUS_USER:$NEXUS_PASS" \
             --upload-file "$CHART_FILE" \
-            "${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }}/$FILENAME")
+            "${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }}/charts/$FILENAME")
 
           echo "HTTP Status: $HTTP_STATUS"
 
