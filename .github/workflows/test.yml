@@ -84,9 +84,9 @@ jobs:
       # 🔥 7. OCI Login (NEW)
       - name: Login to Nexus OCI registry
         run: |
-          helm registry login ${{ env.NEXUS_URL }} \
-          -u ${{ secrets.NEXUS_USERNAME }} \
-          -p ${{ secrets.NEXUS_PASSWORD }} \
+          echo "${{ secrets.NEXUS_PASSWORD }}" | helm registry login 20.235.80.53:8081 \
+          -u "${{ secrets.NEXUS_USERNAME }}" \
+          --password-stdin \
           --insecure
 
       # 🔥 8. OCI Push (REPLACED curl)
