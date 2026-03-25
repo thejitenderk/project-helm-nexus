@@ -8,8 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  NEXUS_URL: 20.235.80.53:8081
-  NEXUS_REPO: helm-oci
+  NEXUS_URL: 20.235.80.53:8081/helm-oci
   CHART_DIR: charts
 
 jobs:
@@ -91,7 +90,7 @@ jobs:
           CHART_FILE=$(ls packaged/*.tgz)
           echo "🚀 Pushing: $CHART_FILE"
           helm push $CHART_FILE \
-            oci://${{ env.NEXUS_URL }}/${{ env.NEXUS_REPO }} \
+            oci://${{ env.NEXUS_URL }}/Charts \
             --plain-http
 
       # 9. Summary
