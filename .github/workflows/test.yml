@@ -1,4 +1,4 @@
-name: Helm Chart CI/CD → Nexus
+name: Helm Chart CI/CD → Nexus (OCI)
 
 on:
   push:
@@ -9,33 +9,25 @@ on:
   workflow_dispatch:
 
 env:
-  NEXUS_URL: http://20.235.80.53:8081
-  NEXUS_REPO: helm-hosted
+  NEXUS_URL: 20.235.80.53:8082   # ⚠️ docker repo port
+  NEXUS_REPO: helm-oci
   CHART_DIR: charts
 
 jobs:
   helm-push:
-    name: Package & Push Helm Chart
+    name: Package & Push Helm Chart (OCI)
     runs-on: self-hosted
 
-    permissions:
-      contents: write
-
     steps:
-      # ─── 1. Code checkout ───────────────────────────────────────────
+      # 1. Checkout
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # ─── 2. Helm install ────────────────────────────────────────────
+      # 2. Setup Helm
       - name: Setup Helm
         uses: azure/setup-helm@v4
-        with:
-          version: 'latest'
 
-      # ─── 3. Auto version bump ───────────────────────────────────────
+      # 3. Version bump
       - name: Bump chart version
         id: chart_info
         run: |
@@ -49,21 +41,12 @@ jobs:
           NEW_PATCH=$((PATCH + 1))
           NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
 
-          echo "📦 Chart: $CHART_NAME"
-          echo "🔢 Version: $CURRENT_VERSION → $NEW_VERSION"
-
-          # macOS (BSD sed) aur Linux (GNU sed) dono ke liye compatible
-          if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s/^version: .*/version: $NEW_VERSION/" ${{ env.CHART_DIR }}/Chart.yaml
-          else
-            sed -i "s/^version: .*/version: $NEW_VERSION/" ${{ env.CHART_DIR }}/Chart.yaml
-          fi
+          sed -i "s/^version: .*/version: $NEW_VERSION/" ${{ env.CHART_DIR }}/Chart.yaml
 
           echo "chart_name=$CHART_NAME" >> $GITHUB_OUTPUT
-          echo "old_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      # ─── 4. Version bump commit & push ──────────────────────────────
+      # 4. Commit version bump
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
@@ -72,52 +55,36 @@ jobs:
           git commit -m "ci: bump chart version to ${{ steps.chart_info.outputs.new_version }} [skip ci]"
           git push
 
-      # ─── 5. Helm lint ───────────────────────────────────────────────
+      # 5. Helm lint
       - name: Lint Helm chart
-        run: |
-          helm lint ${{ env.CHART_DIR }}
+        run: helm lint ${{ env.CHART_DIR }}
 
-      # ─── 6. Helm package ────────────────────────────────────────────
+      # 6. Package chart
       - name: Package Helm chart
         run: |
           mkdir -p packaged
           helm package ${{ env.CHART_DIR }} --destination packaged/
-          echo "✅ Packaged: $(ls packaged/)"
 
-      # ─── 7. Push to Nexus ───────────────────────────────────────────
-      - name: Push chart to Nexus
-        env:
-          NEXUS_USER: ${{ secrets.NEXUS_USERNAME }}
-          NEXUS_PASS: ${{ secrets.NEXUS_PASSWORD }}
+      # 🔥 7. OCI Login (IMPORTANT)
+      - name: Login to Nexus OCI registry
+        run: |
+          helm registry login ${{ env.NEXUS_URL }} \
+            -u ${{ secrets.NEXUS_USERNAME }} \
+            -p ${{ secrets.NEXUS_PASSWORD }}
+
+      # 🔥 8. Push using OCI (MAIN CHANGE)
+      - name: Push chart to OCI Nexus
         run: |
           CHART_FILE=$(ls packaged/*.tgz)
-          FILENAME=$(basename $CHART_FILE)
+          
+          echo "🚀 Pushing to OCI registry..."
+          
+          helm push $CHART_FILE oci://${{ env.NEXUS_URL }}/${{ env.NEXUS_REPO }}
 
-          echo "🚀 Pushing $FILENAME to Nexus..."
-
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -u "$NEXUS_USER:$NEXUS_PASS" \
-            --upload-file "$CHART_FILE" \
-            "${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }}/charts/$FILENAME")
-
-          echo "HTTP Status: $HTTP_STATUS"
-
-          if [[ "$HTTP_STATUS" == "200" || "$HTTP_STATUS" == "201" ]]; then
-            echo "✅ Chart pushed successfully!"
-          else
-            echo "❌ Push failed with HTTP $HTTP_STATUS"
-            exit 1
-          fi
-
-      # ─── 8. Summary ─────────────────────────────────────────────────
+      # 9. Summary
       - name: Job Summary
         run: |
-          echo "## 🎉 Helm Chart Pushed!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Chart | \`${{ steps.chart_info.outputs.chart_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Old Version | \`${{ steps.chart_info.outputs.old_version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| New Version | \`${{ steps.chart_info.outputs.new_version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Nexus Repo | \`${{ env.NEXUS_REPO }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| URL | ${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }}/ |" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Helm Chart Pushed (OCI)!" >> $GITHUB_STEP_SUMMARY
+          echo "| Chart | ${{ steps.chart_info.outputs.chart_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ steps.chart_info.outputs.new_version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Repo | oci://${{ env.NEXUS_URL }}/${{ env.NEXUS_REPO }} |" >> $GITHUB_STEP_SUMMARY
