@@ -91,7 +91,7 @@ jobs:
           CHART_FILE=$(ls packaged/*.tgz)
           echo "🚀 Pushing: $CHART_FILE"
           helm push $CHART_FILE \
-            oci://${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }} \
+            oci://${{ env.NEXUS_URL }}/${{ env.NEXUS_REPO }} \
             --plain-http
 
       # 9. Summary
