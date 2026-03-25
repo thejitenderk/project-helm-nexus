@@ -85,8 +85,9 @@ jobs:
       - name: Login to Nexus OCI registry
         run: |
           helm registry login ${{ env.NEXUS_URL }} \
-            -u ${{ secrets.NEXUS_USERNAME }} \
-            -p ${{ secrets.NEXUS_PASSWORD }}
+          -u ${{ secrets.NEXUS_USERNAME }} \
+          -p ${{ secrets.NEXUS_PASSWORD }} \
+          --insecure
 
       # 🔥 8. OCI Push (REPLACED curl)
       - name: Push chart to Nexus (OCI)
@@ -94,7 +95,9 @@ jobs:
           CHART_FILE=$(ls packaged/*.tgz)
 
           echo "🚀 Pushing to OCI registry..."
-          helm push $CHART_FILE oci://${{ env.NEXUS_URL }}/${{ env.NEXUS_REPO }}
+          helm push $CHART_FILE \
+          oci://${{ env.NEXUS_URL }}/repository/${{ env.NEXUS_REPO }} \
+          --insecure
 
       # 9. Summary
       - name: Job Summary
