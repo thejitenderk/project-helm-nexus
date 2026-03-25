@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  NEXUS_URL: 20.235.80.53:8082   # 🔥 docker repo port
+  NEXUS_URL: 20.235.80.53:8081   # 🔥 docker repo port
   NEXUS_REPO: helm-oci
   CHART_DIR: charts
 
