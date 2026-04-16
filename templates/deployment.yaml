@@ -8,7 +8,7 @@ metadata:
     app: {{ $svc.name }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     release: "{{ $.Release.Name }}"
-    harness.io/release: {{ $.Release.Name }}
+    harness.io/release-name: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
 spec:
   replicas: {{ $svc.replicaCount }}
@@ -21,7 +21,7 @@ spec:
       labels:
         app: {{ $svc.name }}
         release: {{ $.Release.Name }}
-        harness.io/release: {{ $.Release.Name }}
+        harness.io/release-name: {{ $.Release.Name }}
     spec:
       {{- if $svc.dockercfg }}
       imagePullSecrets:
