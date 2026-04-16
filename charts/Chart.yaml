@@ -1,6 +1,0 @@
-apiVersion: v2
-name: voting-app-chart
-description: Docker Sample Voting App - Unified Helm Chart
-type: application
-version: 0.1.10
-appVersion: "1.0.0"
