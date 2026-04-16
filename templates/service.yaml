@@ -7,6 +7,7 @@ metadata:
     app: {{ $svc.name }}
     chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
     release: {{ $.Release.Name }}
+    harness.io/release-name: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
 spec:
   type: {{ $svc.service.type }}
