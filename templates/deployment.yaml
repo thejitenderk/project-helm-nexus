@@ -10,6 +10,8 @@ metadata:
     release: "{{ $.Release.Name }}"
     harness.io/release-name: {{ $.Release.Name }}
     heritage: {{ $.Release.Service }}
+  annotations:
+    kustomize.config.k8s.io/needs-hash: "false"
 spec:
   replicas: {{ $svc.replicaCount }}
   selector:
