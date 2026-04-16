@@ -1,0 +1,19 @@
+{{- range $key, $svc := .Values.microservices }}
+{{- if $svc.env.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $svc.name }}
+  labels:
+    app: {{ $svc.name }}
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    release: {{ $.Release.Name }}
+    harness.io/release-name: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+data:
+{{- range $key, $value := $svc.env.config }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+---
+{{- end }}
+{{- end }}
