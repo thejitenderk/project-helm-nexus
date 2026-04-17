@@ -1,65 +1,20 @@
-microservices:
-  vote:
-    name: voting-app
-    replicaCount: 1
-    image: dockersamples/examplevotingapp_vote:before
-    pullPolicy: Always
-    dockercfg: null
-    service:
-      type: LoadBalancer
-      port: 80
-    env:
-      config:
-        REDIS_HOST: redis
-        REDIS_PORT: "6379"
-      secrets:
-        REDIS_PASSWORD: redispassword789
+name: my-app
+replicaCount: 2
 
-  result:
-    name: result-app
-    replicaCount: 1
-    image: dockersamples/examplevotingapp_result:before
-    pullPolicy: Always
-    dockercfg: null
-    service:
-      type: LoadBalancer
-      port: 80
-    env:
-      config:
-        DATABASE_HOST: postgres
-        DATABASE_PORT: "5432"
-        DATABASE_NAME: votes
-      secrets:
-        DATABASE_USER: postgres
-        DATABASE_PASSWORD: postgres
+image: <+artifacts.primary.image>
+dockercfg: <+artifacts.primary.imagePullSecret>
 
-  postgres:
-    name: voting-postgres
-    replicaCount: 1
-    image: postgres:15-alpine
-    pullPolicy: IfNotPresent
-    dockercfg: null
-    service:
-      type: ClusterIP
-      port: 5432
-    env:
-      config:
-        POSTGRES_DB: votes
-      secrets:
-        POSTGRES_PASSWORD: postgres
+createNamespace: true
+namespace: <+infra.namespace>
 
-  redis:
-    name: voting-redis
-    replicaCount: 1
-    image: redis:7-alpine
-    pullPolicy: IfNotPresent
-    dockercfg: null
-    service:
-      type: ClusterIP
-      port: 6379
-    env:
-      config:
-        REDIS_PORT: "6379"
-        REDIS_MAXMEMORY: "256mb"
-      secrets:
-        REDIS_PASSWORD: redispassword789
+service:
+  type: LoadBalancer
+  port: 80
+
+pullPolicy: IfNotPresent
+
+env:
+  config:
+    key1: value1
+  secrets:
+    key2: value2
