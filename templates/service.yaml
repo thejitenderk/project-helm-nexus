@@ -1,10 +1,13 @@
+{{- if .Values.env.config}}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ template "todolist.fullname" . }}
   labels:
-    app: {{.Values.name}}
+    app: {{ template "todolist.name" . }}
+    chart: {{ template "todolist.chart" . }}
     release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -13,5 +16,7 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: {{.Values.name}}
+    app: {{ template "todolist.name" . }}
     release: {{ .Release.Name }}
+---
+{{- end }}

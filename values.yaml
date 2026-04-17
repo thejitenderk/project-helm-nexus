@@ -1,20 +1,18 @@
-name: my-app
-replicaCount: 2
+name: voting-app
+replicaCount: 1
 
-image: <+artifacts.primary.image>
-dockercfg: <+artifacts.primary.imagePullSecret>
-
-createNamespace: true
-namespace: <+infra.namespace>
+image: dockersamples/examplevotingapp_vote:before
+dockercfg: null
 
 service:
   type: LoadBalancer
   port: 80
 
-pullPolicy: IfNotPresent
+pullPolicy: Always
 
 env:
   config:
-    key1: value1
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
   secrets:
-    key2: value2
+    REDIS_PASSWORD: redispassword789
