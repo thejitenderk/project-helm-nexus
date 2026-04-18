@@ -1,9 +1,35 @@
-{{- if .Values.env.config}}
+{{- if .Values.apps.vote.enabled }}
+{{- if .Values.apps.vote.env.config }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.Values.name}}
+  name: {{ .Values.apps.vote.name }}
 data:
-{{.Values.env.config | toYaml | indent 2}}
+{{ .Values.apps.vote.env.config | toYaml | indent 2 }}
 ---
+{{- end }}
+{{- end }}
+
+{{- if .Values.apps.result.enabled }}
+{{- if .Values.apps.result.env.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.apps.result.name }}
+data:
+{{ .Values.apps.result.env.config | toYaml | indent 2 }}
+---
+{{- end }}
+{{- end }}
+
+{{- if .Values.apps.worker.enabled }}
+{{- if .Values.apps.worker.env.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.apps.worker.name }}
+data:
+{{ .Values.apps.worker.env.config | toYaml | indent 2 }}
+---
+{{- end }}
 {{- end }}

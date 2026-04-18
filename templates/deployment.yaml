@@ -1,58 +1,168 @@
-{{- if .Values.env.config}}
-{{- if .Values.dockercfg}}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.Values.name}}-dockercfg
-  annotations:
-    harness.io/skip-versioning: true
-data:
-  .dockercfg: {{.Values.dockercfg}}
-type: kubernetes.io/dockercfg
----
-{{- end}}
-
+{{- if .Values.apps.vote.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "todolist.fullname" . }}
+  name: {{ .Values.apps.vote.name }}
   labels:
-    app: {{ template "todolist.name" . }}
+    app: {{ .Values.apps.vote.name }}
+    component: vote
     chart: {{ template "todolist.chart" . }}
-    release: "{{ .Release.Name }}"
-    harness.io/release: {{ .Release.Name }}
+    release: {{ .Release.Name }}
+    harness.io/release-name: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.apps.vote.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "todolist.name" . }}
+      app: {{ .Values.apps.vote.name }}
+      component: vote
       release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ template "todolist.name" . }}
+        app: {{ .Values.apps.vote.name }}
+        component: vote
         release: {{ .Release.Name }}
-        harness.io/release: {{ .Release.Name }}
+        harness.io/release-name: {{ .Release.Name }}
     spec:
-      {{- if .Values.dockercfg}}
-      imagePullSecrets:
-      - name: {{.Values.name}}-dockercfg
-      {{- end}}
       containers:
-        - name: {{ .Chart.Name }}
-          image: {{.Values.image}}
+        - name: {{ .Values.apps.vote.name }}
+          image: {{ .Values.apps.vote.image }}
           imagePullPolicy: {{ .Values.pullPolicy }}
-          {{- if or .Values.env.config .Values.env.secrets}}
+          ports:
+            - containerPort: {{ .Values.apps.vote.service.port }}
+              protocol: TCP
+              name: http
+          {{- if or .Values.apps.vote.env.config .Values.apps.vote.env.secrets }}
           envFrom:
-          {{- if .Values.env.config}}
-          - configMapRef:
-              name: {{.Values.name}}
-          {{- end}}
-          {{- if .Values.env.secrets}}
-          - secretRef:
-              name: {{.Values.name}}
-          {{- end}}
-          {{- end}}
+            {{- if .Values.apps.vote.env.config }}
+            - configMapRef:
+                name: {{ .Values.apps.vote.name }}
+            {{- end }}
+            {{- if .Values.apps.vote.env.secrets }}
+            - secretRef:
+                name: {{ .Values.apps.vote.name }}
+            {{- end }}
+          {{- end }}
+---
+{{- end }}
+
+{{- if .Values.apps.result.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apps.result.name }}
+  labels:
+    app: {{ .Values.apps.result.name }}
+    component: result
+    chart: {{ template "todolist.chart" . }}
+    release: {{ .Release.Name }}
+    harness.io/release-name: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.apps.result.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apps.result.name }}
+      component: result
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apps.result.name }}
+        component: result
+        release: {{ .Release.Name }}
+        harness.io/release-name: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Values.apps.result.name }}
+          image: {{ .Values.apps.result.image }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.apps.result.service.port }}
+              protocol: TCP
+              name: http
+          {{- if .Values.apps.result.env.config }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.apps.result.name }}
+          {{- end }}
+---
+{{- end }}
+
+{{- if .Values.apps.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apps.worker.name }}
+  labels:
+    app: {{ .Values.apps.worker.name }}
+    component: worker
+    chart: {{ template "todolist.chart" . }}
+    release: {{ .Release.Name }}
+    harness.io/release-name: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.apps.worker.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apps.worker.name }}
+      component: worker
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apps.worker.name }}
+        component: worker
+        release: {{ .Release.Name }}
+        harness.io/release-name: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Values.apps.worker.name }}
+          image: {{ .Values.apps.worker.image }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          {{- if .Values.apps.worker.env.config }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.apps.worker.name }}
+          {{- end }}
+---
+{{- end }}
+
+{{- if .Values.apps.redis.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apps.redis.name }}
+  labels:
+    app: {{ .Values.apps.redis.name }}
+    component: redis
+    chart: {{ template "todolist.chart" . }}
+    release: {{ .Release.Name }}
+    harness.io/release-name: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.apps.redis.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apps.redis.name }}
+      component: redis
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apps.redis.name }}
+        component: redis
+        release: {{ .Release.Name }}
+        harness.io/release-name: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Values.apps.redis.name }}
+          image: {{ .Values.apps.redis.image }}
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.apps.redis.service.port }}
+              protocol: TCP
+              name: redis
 ---
 {{- end }}

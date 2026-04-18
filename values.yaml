@@ -1,18 +1,49 @@
-name: voting-app
-replicaCount: 1
+pullPolicy: IfNotPresent
 
-image: dockersamples/examplevotingapp_vote:before
-dockercfg: null
+apps:
+  vote:
+    enabled: true
+    name: voting-app
+    replicaCount: 1
+    image: dockersamples/examplevotingapp_vote:before
+    service:
+      type: ClusterIP
+      port: 80
+    env:
+      config:
+        REDIS_HOST: redis
+        REDIS_PORT: "6379"
+      secrets:
+        REDIS_PASSWORD: redispassword789
 
-service:
-  type: LoadBalancer
-  port: 80
+  result:
+    enabled: true
+    name: result-app
+    replicaCount: 1
+    image: dockersamples/examplevotingapp_result:before
+    service:
+      type: ClusterIP
+      port: 80
+    env:
+      config:
+        REDIS_HOST: redis
+        REDIS_PORT: "6379"
 
-pullPolicy: Always
+  worker:
+    enabled: true
+    name: worker-app
+    replicaCount: 1
+    image: dockersamples/examplevotingapp_worker:before
+    env:
+      config:
+        REDIS_HOST: redis
+        REDIS_PORT: "6379"
 
-env:
-  config:
-    REDIS_HOST: redis
-    REDIS_PORT: "6379"
-  secrets:
-    REDIS_PASSWORD: redispassword789
+  redis:
+    enabled: true
+    name: redis
+    replicaCount: 1
+    image: redis:6.0
+    service:
+      type: ClusterIP
+      port: 6379
